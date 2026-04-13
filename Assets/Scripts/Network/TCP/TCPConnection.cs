@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using UnityEngine;
 
 class TCPConnection : Connection
 {
     private TcpClient tcpClient = null;
-    private bool isClosed = false;
     private Queue<byte[]> dataRecive = new Queue<byte[]>();
     private byte[] readBuffer = new byte[1024];
     private object readHandler = new object();
@@ -32,43 +32,56 @@ class TCPConnection : Connection
 
     private void OnConnectClient(IAsyncResult asyncResult)
     {
-        tcpClient.EndConnect(asyncResult);
-        NetworkStream stream = tcpClient.GetStream();
-        stream.BeginRead(readBuffer, 0, readBuffer.Length, OnRead, null);
-        onConnected?.Invoke(this);
+        try
+        {
+            tcpClient.EndConnect(asyncResult);
+            NetworkStream stream = tcpClient.GetStream();
+            stream.BeginRead(readBuffer, 0, readBuffer.Length, OnRead, null);
+            onConnected?.Invoke(this);
+        }
+        catch (SocketException)
+        {
+            Debug.Log("The server is offline");
+        }
+        catch (ObjectDisposedException e)
+        {
+            Debug.Log("Disposed: " + e);
+        }
     }
 
     public override void Close()
     {
-        if (isClosed) return;
-        isClosed = true;
-
-        if (IsConnected)
-        {
-            NetworkStream stream = tcpClient.GetStream();
-            stream.Close();
-        }
         tcpClient.Close();
     }
 
     private void OnRead(IAsyncResult asyncResult)
     {
-        if (isClosed) return;
-        NetworkStream stream = tcpClient.GetStream();
-        if (stream.EndRead(asyncResult) == 0)
+        try
         {
-            onDisconnected?.Invoke(this);
-            return;
-        }
+            NetworkStream stream = tcpClient.GetStream();
+            if (stream.EndRead(asyncResult) == 0)
+            {
+                onDisconnected?.Invoke(this);
+                return;
+            }
 
-        lock (readHandler)
+            lock (readHandler)
+            {
+                byte[] data = readBuffer.TakeWhile(b => (char)b != '\0').ToArray();
+                dataRecive.Enqueue(data);
+            }
+
+            Array.Clear(readBuffer, 0, readBuffer.Length);
+            stream.BeginRead(readBuffer, 0, readBuffer.Length, OnRead, null);
+        }
+        catch (SocketException e)
         {
-            byte[] data = readBuffer.TakeWhile(b => (char)b != '\0').ToArray();
-            dataRecive.Enqueue(data);
+            Debug.Log("SocketException: " + e);
         }
-
-        Array.Clear(readBuffer, 0, readBuffer.Length);
-        stream.BeginRead(readBuffer, 0, readBuffer.Length, OnRead, null);
+        catch (ObjectDisposedException)
+        {
+            Debug.Log("The server is offline");
+        }
     }
 
     public override void SendData(byte[] data)

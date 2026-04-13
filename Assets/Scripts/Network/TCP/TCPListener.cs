@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using UnityEngine;
 
 public class TCPListener : Listener
 {
-    private bool isStopped = false;
     private TcpListener tcpListener = null;
 
     public TCPListener(int port,
@@ -12,7 +12,6 @@ public class TCPListener : Listener
         Action<Connection> onConnectionDisconnected)
         : base(onConnectionAccepted, onConnectionDisconnected)
     {
-        isStopped = false;
         tcpListener = new TcpListener(IPAddress.Any, port);
         tcpListener.Start();
         tcpListener.BeginAcceptTcpClient(OnClientAccepted, null);
@@ -20,19 +19,25 @@ public class TCPListener : Listener
 
     private void OnClientAccepted(IAsyncResult ar)
     {
-        //if (isStopped) return;
-
-        TcpClient client = tcpListener.EndAcceptTcpClient(ar);
-        Connection connection = new TCPConnection(client, null, onConnectionDisconnected);
-        onConnectionAccepted?.Invoke(connection);
-        tcpListener.BeginAcceptTcpClient(OnClientAccepted, null);
+        try
+        {
+            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
+            Connection connection = new TCPConnection(client, null, onConnectionDisconnected);
+            onConnectionAccepted?.Invoke(connection);
+            tcpListener.BeginAcceptTcpClient(OnClientAccepted, null);
+        }
+        catch (SocketException e)
+        {
+            Debug.Log("SocketException: " + e);
+        }
+        catch (ObjectDisposedException e)
+        {
+            Debug.Log("Disposed: " + e);
+        }
     }
 
     public override void Stop()
     {
-        if (isStopped) return;
-        isStopped = true;
-
         tcpListener.Stop();
     }
 }

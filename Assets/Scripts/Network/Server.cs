@@ -39,9 +39,14 @@ public class Server : ITickable
 
     private void OnReciveData(in ServerReciveDataEvent reciveDataEvent)
     {
+        Broadcast(reciveDataEvent.Data);
+    }
+
+    private void Broadcast(byte[] data)
+    {
         foreach (Connection connection in connections)
         {
-            connection.SendData(reciveDataEvent.Data);
+            connection.SendData(data);
         }
     }
 }

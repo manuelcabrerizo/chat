@@ -16,6 +16,8 @@ public enum UDPHeader
 public class NetworkManager : MonoBehaviour
 { 
     [SerializeField] private bool isServer = false;
+    [SerializeField] private bool isClient = false;
+
     [SerializeField] private string address = "localhost";
     [SerializeField] private int port = 3000;
     [SerializeField] private NetworkProtocolType protocol = NetworkProtocolType.TCP;
@@ -26,7 +28,7 @@ public class NetworkManager : MonoBehaviour
     private void Awake()
     {
         server = isServer ? new Server(protocol, port) : null;
-        client = !isServer ? new Client(protocol, address, port) : null;
+        client = isClient ? new Client(protocol, address, port) : null;
     }
 
     private void OnDestroy()

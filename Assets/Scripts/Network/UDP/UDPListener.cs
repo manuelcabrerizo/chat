@@ -27,10 +27,6 @@ public class UDPListener : Listener
         listenerThread.Start();
     }
 
-    private void OnClientAccepted(UdpClient client)
-    {
-    }
-
     public override void Stop()
     {
         listenerThreadIsRunning = false;
@@ -76,6 +72,9 @@ public class UDPListener : Listener
                 case UDPHeader.Message:
                 {
                     byte[] data = reader.ReadBytes(bytes.Length - sizeof(int));
+
+
+
                 } break;
                 default:
                     break;

@@ -942,9 +942,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isServer: 1
+  isClient: 1
   address: localhost
   port: 3000
-  protocol: 0
+  protocol: 1
 --- !u!1 &1216100738
 GameObject:
   m_ObjectHideFlags: 0
