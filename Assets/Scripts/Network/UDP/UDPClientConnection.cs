@@ -145,7 +145,7 @@ class UDPClientConnection : Connection
         }
     }
 
-    public override void FlushReciveData<EventType>()
+    public override void Tick<EventType>()
     {
         if (!IsConnected)
         {

@@ -14,9 +14,8 @@ public abstract class Connection
                 return new TCPConnection(address, port, onConnected, onDisconnected);
             case NetworkProtocolType.UDP:
                 return new UDPClientConnection(address, port, onConnected, onDisconnected);
-            default:
-                return null;
         }
+        return null;
     }
 
     public Connection(Action<Connection> onConnected, Action<Connection> onDisconnected)
@@ -26,7 +25,7 @@ public abstract class Connection
     }
 
     public abstract bool IsConnected { get; }
-    public abstract void FlushReciveData<EventType>() where EventType : Event, new();
+    public abstract void Tick<EventType>() where EventType : Event, new();
     public abstract void SendData(byte[] data);
     public abstract void Close();
 }

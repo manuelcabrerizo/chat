@@ -22,7 +22,7 @@ public class Server : ITickable
     {
         foreach (Connection connection in connections)
         {
-            connection.FlushReciveData<ServerReciveDataEvent>();
+            connection.Tick<ServerReciveDataEvent>();
         }
     }
 

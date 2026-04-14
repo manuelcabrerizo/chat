@@ -13,6 +13,7 @@ public class UDPListener : Listener
     private int connectionIdGenerator;
 
     private Dictionary<IPEndPoint, UDPServerConnection> connections;
+    private Dictionary<IPEndPoint, long> lastSendMessageIds;
 
     public UDPListener(int port,
         Action<Connection> onConnectionAccepted,
@@ -23,6 +24,7 @@ public class UDPListener : Listener
         connectionIdGenerator = 0;
         udpListener = new UdpClient(listenPort);
         connections = new Dictionary<IPEndPoint, UDPServerConnection>();
+        lastSendMessageIds = new Dictionary<IPEndPoint, long>();
         
         listenerThread = new Thread(ListenerThread);
         listenerThread.IsBackground = true;
@@ -44,6 +46,7 @@ public class UDPListener : Listener
                 udpListener, endPoint, null, onConnectionDisconnected);
             onConnectionAccepted?.Invoke(connection);
             connections.Add(endPoint, connection);
+            lastSendMessageIds.Add(endPoint, 0);
         }
 
         UDPHeader header = UDPHeader.ConnectionAccepted;
@@ -57,21 +60,26 @@ public class UDPListener : Listener
 
     private void OnClientSendMessage(IPEndPoint endPoint, long messageId, byte[] message)
     {
-        if (connections.ContainsKey(endPoint))
+        if (messageId != lastSendMessageIds[endPoint])
         {
-            UDPServerConnection connection = connections[endPoint];
-            if(!connection.HasMessage(messageId))
-            {
-                connection.EnqueueMessage(messageId, message);
-            }
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            writer.Write(messageId);
+            writer.Write(message);
+            byte[] data = stream.ToArray();
+            EventBus.Instance.Raise<ServerReciveDataEvent>(data);
+            lastSendMessageIds[endPoint] = messageId;
         }
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        UDPHeader header = UDPHeader.ServerRegisterMessage;
-        writer.Write((int)header);
-        writer.Write(messageId);
-        byte[] data = stream.ToArray();
-        udpListener.Send(data, data.Length, endPoint);
+
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            UDPHeader header = UDPHeader.ServerRegisterMessage;
+            writer.Write((int)header);
+            writer.Write(messageId);
+            byte[] data = stream.ToArray();
+            udpListener.Send(data, data.Length, endPoint);
+        }
     }
 
     private void OnClientRegisterMessage(IPEndPoint endPoint, long messageId)

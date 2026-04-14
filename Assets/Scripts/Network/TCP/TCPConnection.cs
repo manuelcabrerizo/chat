@@ -90,7 +90,7 @@ class TCPConnection : Connection
         stream.Write(data, 0, data.Length);
     }
 
-    public override void FlushReciveData<EventType>()
+    public override void Tick<EventType>()
     {
         lock (readHandler)
         {

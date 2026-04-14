@@ -29,12 +29,17 @@ public class UDPServerConnection : Connection
         endPoint = null;
     }
 
-    public override void SendData(byte[] data)
+    public override void SendData(byte[] bytes)
     {
-        udpClient.Send(data, data.Length, endPoint);
+        MemoryStream stream = new MemoryStream(bytes);
+        BinaryReader reader = new BinaryReader(stream);
+        UDPMessage udpMessage = new UDPMessage();
+        udpMessage.Id = (long)reader.ReadUInt64();
+        udpMessage.Data = reader.ReadBytes(bytes.Length - sizeof(long));
+        toSendMessages.Enqueue(udpMessage);
     }
 
-    public override void FlushReciveData<EventType>()
+    public override void Tick<EventType>()
     {
         if (toSendMessages.Count <= 0)
         {
@@ -49,7 +54,7 @@ public class UDPServerConnection : Connection
         writer.Write(message.Id);
         writer.Write(message.Data);
         byte[] data = stream.ToArray();
-        EventBus.Instance.Raise<EventType>(data);
+        udpClient.Send(data, data.Length, endPoint);
     }
 
     public bool HasMessage(long id)
@@ -62,14 +67,6 @@ public class UDPServerConnection : Connection
             }
         }
         return false;
-    }
-
-    public void EnqueueMessage(long id, byte[] message)
-    {
-        UDPMessage udpMessage;
-        udpMessage.Id = id;
-        udpMessage.Data = message;
-        toSendMessages.Enqueue(udpMessage);
     }
 
     public void DequeueMessage()

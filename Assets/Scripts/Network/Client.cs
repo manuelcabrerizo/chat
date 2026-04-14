@@ -18,7 +18,7 @@
 
     public void Tick()
     {
-        connection.FlushReciveData<ClientReciveDataEvent>();
+        connection.Tick<ClientReciveDataEvent>();
     }
 
     private void OnConnected(Connection connection)
