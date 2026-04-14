@@ -10,7 +10,16 @@ public enum UDPHeader
 { 
     ConnectionRequest,
     ConnectionAccepted,
-    Message
+    ClientSendMessage,
+    ServerRegisterMessage,
+    ServerSendMessage,
+    ClientRegisterMessage
+}
+
+public struct UDPMessage
+{
+    public long Id;
+    public byte[] Data;
 }
 
 public class NetworkManager : MonoBehaviour
@@ -43,13 +52,3 @@ public class NetworkManager : MonoBehaviour
         client?.Tick();
     }
 }
-
-/*
-TODO: ...
-public enum NetworkRole
-{
-    Client,
-    Server,
-    Hybrid
-}
-*/

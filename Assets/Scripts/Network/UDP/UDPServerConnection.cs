@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -7,12 +8,17 @@ public class UDPServerConnection : Connection
 {
     private UdpClient udpClient = null;
     private IPEndPoint endPoint = null;
+    private Queue<UDPMessage> toSendMessages;
+
     public UDPServerConnection(UdpClient udpClient, IPEndPoint endPoint,
         Action<Connection> onConnected, Action<Connection> onDisconnected)
-        : base(onConnected, onDisconnected)
+        : 
+        
+        base(onConnected, onDisconnected)
     {
         this.udpClient = udpClient;
         this.endPoint = endPoint;
+        toSendMessages = new Queue<UDPMessage>();
     }
 
     public override bool IsConnected => endPoint != null;
@@ -23,19 +29,51 @@ public class UDPServerConnection : Connection
         endPoint = null;
     }
 
-    public override void FlushReciveData<EventType>()
+    public override void SendData(byte[] data)
     {
-        throw new NotImplementedException();
+        udpClient.Send(data, data.Length, endPoint);
     }
 
-    public override void SendData(byte[] bytes)
+    public override void FlushReciveData<EventType>()
     {
-        UDPHeader header = UDPHeader.Message;
+        if (toSendMessages.Count <= 0)
+        {
+            return;
+        }
+
+        UDPMessage message = toSendMessages.Peek();
         MemoryStream stream = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(stream);
+        UDPHeader header = UDPHeader.ServerSendMessage;
         writer.Write((int)header);
-        writer.Write(bytes);
+        writer.Write(message.Id);
+        writer.Write(message.Data);
         byte[] data = stream.ToArray();
-        udpClient.Send(data, data.Length, endPoint);
+        EventBus.Instance.Raise<EventType>(data);
+    }
+
+    public bool HasMessage(long id)
+    {
+        foreach (UDPMessage message in toSendMessages)
+        {
+            if (message.Id == id)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void EnqueueMessage(long id, byte[] message)
+    {
+        UDPMessage udpMessage;
+        udpMessage.Id = id;
+        udpMessage.Data = message;
+        toSendMessages.Enqueue(udpMessage);
+    }
+
+    public void DequeueMessage()
+    { 
+        toSendMessages.Dequeue();
     }
 }
