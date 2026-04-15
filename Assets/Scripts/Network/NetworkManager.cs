@@ -51,7 +51,6 @@ public class NetworkManager : MonoBehaviour
 
     private void OnLoginRequest(in NetworkLoginRequestEvent networkLoginRequestEvent)
     {
-        string username = networkLoginRequestEvent.Username;
         string address = networkLoginRequestEvent.Address;
         int port = networkLoginRequestEvent.Port;
         bool isServer = networkLoginRequestEvent.IsServer;

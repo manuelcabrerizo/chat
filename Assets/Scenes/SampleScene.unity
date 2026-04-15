@@ -275,6 +275,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   messagePrefab: {fileID: 7398280937294739887, guid: a612aee7ab57d55488ebf40ce1a9c712, type: 3}
+  responsePrefab: {fileID: 7398280937294739887, guid: b079108dcb2be22479b8b573e3d79235, type: 3}
   content: {fileID: 1027018066}
   inputField: {fileID: 892380039}
   button: {fileID: 1216100740}
@@ -1566,7 +1567,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dc2be56b4640ca46933c1116d863802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  protocol: 1
+  protocol: 0
 --- !u!1 &1027018066
 GameObject:
   m_ObjectHideFlags: 0
@@ -1601,7 +1602,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0002746582}
+  m_AnchoredPosition: {x: 0, y: -0.0007324219}
   m_SizeDelta: {x: 0, y: -650}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1027018068

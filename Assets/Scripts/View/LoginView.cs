@@ -28,16 +28,17 @@ public class LoginView : MonoBehaviour
     {
         if (InputIsValid())
         {
-            string username = usernameInputField.text;
             string address = addressInputField.text;
             int port = int.Parse(portInputField.text);
             bool isServer = isServerToggle.isOn;
-            EventBus.Instance.Raise<NetworkLoginRequestEvent>(username, address, port, isServer);
+            EventBus.Instance.Raise<NetworkLoginRequestEvent>(address, port, isServer);
         }
     }
 
     private void OnLogin(in NetworkLoginAcceptedEvent networkLoginAcceptedEvent)
     {
+        ChatView chatView = chatPanel.GetComponent<ChatView>();
+        chatView.SetUsername(usernameInputField.text);
         chatPanel.SetActive(true);
         gameObject.SetActive(false);
     }

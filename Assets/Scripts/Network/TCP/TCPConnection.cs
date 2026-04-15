@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 
 class TCPConnection : Connection
 {
@@ -67,7 +69,9 @@ class TCPConnection : Connection
 
             lock (readHandler)
             {
-                byte[] data = readBuffer.TakeWhile(b => (char)b != '\0').ToArray();
+                //byte[] data = readBuffer.TakeWhile(b => (char)b != '\0').ToArray();
+                byte[] data = new byte[readBuffer.Length];
+                Array.Copy(readBuffer, data, data.Length);
                 dataRecive.Enqueue(data);
             }
 

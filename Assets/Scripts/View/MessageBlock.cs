@@ -1,11 +1,31 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MessageBlock : MonoBehaviour
 {
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private RectTransform messageBlock;
-    [SerializeField] private TMP_Text messageText;
+    [SerializeField] protected TMP_Text nameText;
+    [SerializeField] protected TMP_Text messageText;
+    [SerializeField] protected Button responseButton;
+
+    public string Name => nameText.text;
+    public string Message => messageText.text;
+
+    private void Awake()
+    {
+        responseButton.onClick.AddListener(OnResponseButtonClick);
+    }
+
+    private void OnDestroy()
+    {
+        responseButton.onClick.RemoveAllListeners();
+    }
+
+    private void OnResponseButtonClick()
+    {
+        EventBus.Instance.Raise<ResponseMessageEvent>(this);
+    }
+
     public void SetName(string name)
     {
         nameText.text = name;
@@ -14,10 +34,5 @@ public class MessageBlock : MonoBehaviour
     public void SetMessage(string message)
     {
         messageText.text = message;
-        /*
-        float currentWidth = (messageBlock.parent as RectTransform).rect.width;
-        Vector2 adjustedBoxSize = messageText.GetPreferredValues(message, currentWidth, Mathf.Infinity);
-        messageBlock.sizeDelta = new Vector2(messageBlock.sizeDelta.x, adjustedBoxSize.y);
-        */
     }
 }
