@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using TMPro;
@@ -20,6 +21,10 @@ public class ChatView : MonoBehaviour
     [SerializeField] private TMP_InputField inputField;
     [SerializeField] private Button button;
     [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private Button resetResponseMessageButton;
+
+    [SerializeField] private GameObject responseMessageContainer;
+    [SerializeField] private TMP_Text responseMessageText;
 
     private string clientUserName;
     private MessageBlock responseMessage;
@@ -28,12 +33,14 @@ public class ChatView : MonoBehaviour
     {
         responseMessage = null;
         button.onClick.AddListener(OnSendButtonClick);
+        resetResponseMessageButton.onClick.AddListener(OnResetResponseMessageClick);
         EventBus.Instance.Subscribe<ClientReciveDataEvent>(OnReciveData);
         EventBus.Instance.Subscribe<ResponseMessageEvent>(OnResponseMessage);
     }
 
     private void OnDestroy()
     {
+        resetResponseMessageButton.onClick.RemoveAllListeners();
         button.onClick.RemoveAllListeners();
         EventBus.Instance.Unsubscribe<ResponseMessageEvent>(OnResponseMessage);
         EventBus.Instance.Unsubscribe<ClientReciveDataEvent>(OnReciveData);
@@ -73,6 +80,7 @@ public class ChatView : MonoBehaviour
 
             inputField.text = "";
             responseMessage = null;
+            responseMessageContainer.gameObject.SetActive(false);
         }
     }
 
@@ -117,5 +125,13 @@ public class ChatView : MonoBehaviour
     private void OnResponseMessage(in ResponseMessageEvent responseEvent)
     {
         responseMessage = responseEvent.MessageBlock;
+        responseMessageText.text = responseEvent.MessageBlock.Message;
+        responseMessageContainer.gameObject.SetActive(true);
+    }
+
+    private void OnResetResponseMessageClick()
+    {
+        responseMessage = null;
+        responseMessageContainer.gameObject.SetActive(false);
     }
 }
