@@ -4,7 +4,6 @@ using UnityEngine;
 public class MessageBlock : MonoBehaviour
 {
     [SerializeField] private TMP_Text nameText;
-
     [SerializeField] private RectTransform messageBlock;
     [SerializeField] private TMP_Text messageText;
     public void SetName(string name)

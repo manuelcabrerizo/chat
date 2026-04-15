@@ -14,7 +14,7 @@ public class ChatView : MonoBehaviour
 
     private List<MessageBlock> messages;
 
-    private void Start()
+    private void Awake()
     {
         messages = new List<MessageBlock>();
         button.onClick.AddListener(OnSendButtonClick);

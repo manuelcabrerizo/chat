@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public enum NetworkProtocolType
 {
@@ -24,11 +25,6 @@ public struct UDPMessage
 
 public class NetworkManager : MonoBehaviour
 { 
-    [SerializeField] private bool isServer = false;
-    [SerializeField] private bool isClient = false;
-
-    [SerializeField] private string address = "localhost";
-    [SerializeField] private int port = 3000;
     [SerializeField] private NetworkProtocolType protocol = NetworkProtocolType.TCP;
 
     private Client client = null;
@@ -36,19 +32,31 @@ public class NetworkManager : MonoBehaviour
 
     private void Awake()
     {
-        server = isServer ? new Server(protocol, port) : null;
-        client = isClient ? new Client(protocol, address, port) : null;
+        EventBus.Instance.Subscribe<NetworkLoginRequestEvent>(OnLoginRequest);
     }
 
     private void OnDestroy()
     {
         client?.Shutdown();
         server?.Shutdown();
+
+        EventBus.Instance.Unsubscribe<NetworkLoginRequestEvent>(OnLoginRequest);
     }
 
     private void Update()
     {
         server?.Tick();
         client?.Tick();
+    }
+
+    private void OnLoginRequest(in NetworkLoginRequestEvent networkLoginRequestEvent)
+    {
+        string username = networkLoginRequestEvent.Username;
+        string address = networkLoginRequestEvent.Address;
+        int port = networkLoginRequestEvent.Port;
+        bool isServer = networkLoginRequestEvent.IsServer;
+        server = isServer ? new Server(protocol, port) : null;
+        client = new Client(protocol, address, port);
+        EventBus.Instance.Raise<NetworkLoginAcceptedEvent>();
     }
 }
