@@ -17,13 +17,15 @@ class UDPClientConnection : Connection
 
     private long lastMessageReciveId;
     private Queue<byte[]> dataRecive = new Queue<byte[]>();
-    private object readHandle = new object();
 
     private int connectionId;
     private long idGenerator;
 
-    private float TIMER_PER_TICK = 100.0f / 1000.0f;
+    private float TARGET_TICK_RATE = 100.0f / 1000.0f;
     private float timer = 0;
+
+    private object readHandle = new object();
+    private object lockHandle = new object();
 
     public UDPClientConnection(string address, int port,
         Action<Connection> onConnected, Action<Connection> onDisconnected)
@@ -57,7 +59,10 @@ class UDPClientConnection : Connection
     public override void SendData(byte[] data)
     {
         long id = ((long)connectionId << 32) | ++idGenerator;
-        toSendMessages.Add(id, data);
+        lock (lockHandle)
+        {
+            toSendMessages.Add(id, data);
+        }
     }
 
     private void ClienThread()
@@ -131,7 +136,10 @@ class UDPClientConnection : Connection
     private void OnServerRegisterMessage(BinaryReader reader, long readStartPosition)
     {
         long id = reader.ReadInt64();
-        toSendMessages.Remove(id);
+        lock (lockHandle)
+        {
+            toSendMessages.Remove(id);
+        }
     }
 
     private void TryToConnect()
@@ -146,27 +154,31 @@ class UDPClientConnection : Connection
 
     private void TryToSendMessages()
     {
-        foreach (KeyValuePair<long, byte[]> toSend in toSendMessages)
+        lock (lockHandle)
         {
-            MemoryStream stream = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(stream);
-            UDPHeader header = UDPHeader.ClientSendMessage;
-            writer.Write((int)header);
-            writer.Write(toSend.Key);
-            writer.Write(toSend.Value);
-            byte[] dataToSend = stream.ToArray();
-            udpClient.Send(dataToSend, dataToSend.Length);
+            foreach (KeyValuePair<long, byte[]> toSend in toSendMessages)
+            {
+                MemoryStream stream = new MemoryStream();
+                BinaryWriter writer = new BinaryWriter(stream);
+                UDPHeader header = UDPHeader.ClientSendMessage;
+                writer.Write((int)header);
+                writer.Write(toSend.Key);
+                writer.Write(toSend.Value);
+                byte[] dataToSend = stream.ToArray();
+                udpClient.Send(dataToSend, dataToSend.Length);
+            }
         }
     }
 
     public override void Tick<EventType>(float deltaTime)
     {
-        if (timer < TIMER_PER_TICK)
+        if (timer < TARGET_TICK_RATE)
         {
             timer += deltaTime;
             return;
         }
-        timer -= TIMER_PER_TICK;
+        timer -= TARGET_TICK_RATE;
+        
 
         if (!IsConnected)
         {

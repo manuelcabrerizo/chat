@@ -43,10 +43,6 @@ public class NetworkManager : MonoBehaviour
                 port = int.Parse(args[i + 1]);
             }
         }
-#if UNITY_EDITOR
-        port = 3000;
-#endif
-
         if (port == 0)
         {
             Debug.Log("Usage: Chat.exe -port 3000");

@@ -10,7 +10,7 @@ public class UDPServerConnection : Connection
     private IPEndPoint endPoint = null;
     private Queue<UDPMessage> toSendMessages;
 
-    private float TIMER_PER_TICK = 16.0f / 1000.0f;
+    private float TARGET_TICK_RATE = 100.0f / 1000.0f;
     private float timer = 0;
 
     public UDPServerConnection(UdpClient udpClient, IPEndPoint endPoint,
@@ -44,12 +44,12 @@ public class UDPServerConnection : Connection
 
     public override void Tick<EventType>(float deltaTime)
     {
-        if (timer < TIMER_PER_TICK)
+        if (timer < TARGET_TICK_RATE)
         {
             timer += deltaTime;
             return;
         }
-        timer -= TIMER_PER_TICK;
+        timer -= TARGET_TICK_RATE;   
 
         if (toSendMessages.Count <= 0)
         {

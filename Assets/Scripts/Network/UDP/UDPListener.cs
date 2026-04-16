@@ -15,9 +15,11 @@ public class UDPListener : Listener
     private int listenPort;
     private int connectionIdGenerator;
 
+    object lockHandle = new object();
     private Dictionary<IPEndPoint, UDPServerConnection> connections;
     private Dictionary<IPEndPoint, long> lastSendMessageIds;
     private Dictionary<IPEndPoint, DateTime> lastSendMessageTime;
+
     
     public UDPListener(int port,
         Action<Connection> onConnectionAccepted,
@@ -43,42 +45,48 @@ public class UDPListener : Listener
     }
 
     private void OnConnectionRequest(IPEndPoint endPoint)
-    { 
-        if(!connections.ContainsKey(endPoint))
+    {
+        lock (lockHandle)
         {
-            UDPServerConnection connection = new UDPServerConnection(
-                udpListener, endPoint, null, onConnectionDisconnected);
-            onConnectionAccepted?.Invoke(connection);
-            connections.Add(endPoint, connection);
-            lastSendMessageIds.Add(endPoint, 0);
+            if (!connections.ContainsKey(endPoint))
+            {
+                UDPServerConnection connection = new UDPServerConnection(
+                    udpListener, endPoint, null, onConnectionDisconnected);
+                onConnectionAccepted?.Invoke(connection);
+                connections.Add(endPoint, connection);
+                lastSendMessageIds.Add(endPoint, 0);
+            }
+            UDPHeader header = UDPHeader.ConnectionAccepted;
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            writer.Write((int)header);
+            writer.Write(++connectionIdGenerator);
+            byte[] data = stream.ToArray();
+            udpListener.Send(data, data.Length, endPoint);
         }
-        UDPHeader header = UDPHeader.ConnectionAccepted;
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        writer.Write((int)header);
-        writer.Write(++connectionIdGenerator);
-        byte[] data = stream.ToArray();
-        udpListener.Send(data, data.Length, endPoint);
     }
 
     private void OnClientSendMessage(IPEndPoint endPoint, long messageId, byte[] message)
     {
-        if (!lastSendMessageIds.ContainsKey(endPoint))
+        lock (lockHandle)
         {
-            return;
+            if (!lastSendMessageIds.ContainsKey(endPoint))
+            {
+                return;
+            }
+            if (messageId != lastSendMessageIds[endPoint])
+            {
+                lastSendMessageTime[endPoint] = DateTime.Now;
+                MemoryStream stream = new MemoryStream();
+                BinaryWriter writer = new BinaryWriter(stream);
+                writer.Write(messageId);
+                writer.Write(message);
+                byte[] data = stream.ToArray();
+                EventBus.Instance.Raise<ServerReciveDataEvent>(data);
+                lastSendMessageIds[endPoint] = messageId;
+            }
+            SendServerRegisterMessage(endPoint, messageId);
         }
-        if (messageId != lastSendMessageIds[endPoint])
-        {
-            lastSendMessageTime[endPoint] = DateTime.Now;
-            MemoryStream stream = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(stream);
-            writer.Write(messageId);
-            writer.Write(message);
-            byte[] data = stream.ToArray();
-            EventBus.Instance.Raise<ServerReciveDataEvent>(data);
-            lastSendMessageIds[endPoint] = messageId;
-        }
-        SendServerRegisterMessage(endPoint, messageId);
     }
 
     private void SendServerRegisterMessage(IPEndPoint endPoint, long messageId)
@@ -94,33 +102,39 @@ public class UDPListener : Listener
 
     private void OnClientRegisterMessage(IPEndPoint endPoint, long messageId)
     {
-        if (connections.ContainsKey(endPoint))
+        lock (lockHandle)
         {
-            UDPServerConnection connection = connections[endPoint];
-            if (connection.HasMessage(messageId))
+            if (connections.ContainsKey(endPoint))
             {
-                connection.DequeueMessage();
+                UDPServerConnection connection = connections[endPoint];
+                if (connection.HasMessage(messageId))
+                {
+                    connection.DequeueMessage();
+                }
             }
         }
     }
 
     public override void Tick()
     {
-        List<IPEndPoint> toRemove = new List<IPEndPoint>();
-        foreach (KeyValuePair<IPEndPoint, DateTime> lastTime in lastSendMessageTime)
+        lock (lockHandle)
         {
-            double secondsSinceLastSeen = (DateTime.Now - lastTime.Value).TotalSeconds;
-            if (secondsSinceLastSeen > DISCONNECTION_TIME_OUT)
+            List<IPEndPoint> toRemove = new List<IPEndPoint>();
+            foreach (KeyValuePair<IPEndPoint, DateTime> lastTime in lastSendMessageTime)
             {
-                DisconnectConnection(lastTime.Key);
-                toRemove.Add(lastTime.Key);
+                double secondsSinceLastSeen = (DateTime.Now - lastTime.Value).TotalSeconds;
+                if (secondsSinceLastSeen > DISCONNECTION_TIME_OUT)
+                {
+                    DisconnectConnection(lastTime.Key);
+                    toRemove.Add(lastTime.Key);
+                }
             }
+            foreach (IPEndPoint endPoint in toRemove)
+            {
+                lastSendMessageTime.Remove(endPoint);
+            }
+            toRemove.Clear();
         }
-        foreach (IPEndPoint endPoint in toRemove)
-        {
-            lastSendMessageTime.Remove(endPoint);
-        }
-        toRemove.Clear();
     }
 
     private void ListenerThread()
