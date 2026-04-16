@@ -1306,7 +1306,7 @@ GameObject:
   - component: {fileID: 830179124}
   - component: {fileID: 830179123}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Message
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1360,8 +1360,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4280254166
-  m_fontColor: {r: 0.8396226, g: 0.49460942, b: 0.122774996, a: 1}
+    rgba: 4286294159
+  m_fontColor: {r: 0.56078434, g: 0.65882355, b: 0.48235294, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1723,7 +1723,7 @@ GameObject:
   - component: {fileID: 919004045}
   - component: {fileID: 919004044}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Response
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1777,8 +1777,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281119951
-  m_fontColor: {r: 0.8113208, g: 0.70608515, b: 0.17221434, a: 1}
+    rgba: 4286111163
+  m_fontColor: {r: 0.73333335, g: 0.8666667, b: 0.47058824, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1943,7 +1943,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dc2be56b4640ca46933c1116d863802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  protocol: 0
+  protocol: 1
 --- !u!1 &1015230658
 GameObject:
   m_ObjectHideFlags: 0
@@ -2001,7 +2001,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Button
+  m_text: 'Send
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2839,7 +2841,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.36267355, g: 0.4716981, b: 0.3902623, a: 1}
+  m_Color: {r: 0.23137255, g: 0.34901962, b: 0.25882354, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

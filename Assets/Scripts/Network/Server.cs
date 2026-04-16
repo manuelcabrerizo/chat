@@ -18,11 +18,12 @@ public class Server : ITickable
         listener.Stop();
     }
 
-    public void Tick()
+    public void Tick(float deltaTime)
     {
+        listener.Tick();
         foreach (Connection connection in connections)
         {
-            connection.Tick<ServerReciveDataEvent>();
+            connection.Tick<ServerReciveDataEvent>(deltaTime);
         }
     }
 

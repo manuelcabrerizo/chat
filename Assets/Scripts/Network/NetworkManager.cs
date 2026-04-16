@@ -32,21 +32,47 @@ public class NetworkManager : MonoBehaviour
 
     private void Awake()
     {
+#if UNITY_SERVER
+        string[] args = Environment.GetCommandLineArgs();
+
+        int port = 0;
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "-port" && (i + 1) < args.Length)
+            {
+                port = int.Parse(args[i + 1]);
+            }
+        }
+#if UNITY_EDITOR
+        port = 3000;
+#endif
+
+        if (port == 0)
+        {
+            Debug.Log("Usage: Chat.exe -port 3000");
+            Application.Quit();
+        }
+
+        server = port != 0 ? new Server(protocol, port) : null;
+#else
         EventBus.Instance.Subscribe<NetworkLoginRequestEvent>(OnLoginRequest);
+#endif
     }
 
     private void OnDestroy()
     {
         client?.Shutdown();
         server?.Shutdown();
-
+#if UNITY_SERVER
+#else
         EventBus.Instance.Unsubscribe<NetworkLoginRequestEvent>(OnLoginRequest);
+#endif
     }
 
     private void Update()
     {
-        server?.Tick();
-        client?.Tick();
+        server?.Tick(Time.deltaTime);
+        client?.Tick(Time.deltaTime);
     }
 
     private void OnLoginRequest(in NetworkLoginRequestEvent networkLoginRequestEvent)

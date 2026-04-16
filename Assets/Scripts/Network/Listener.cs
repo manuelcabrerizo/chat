@@ -27,5 +27,6 @@ public abstract class Listener
         this.onConnectionDisconnected = onConnectionDisconnected;
     }
 
+    public abstract void Tick();
     public abstract void Stop();
 }

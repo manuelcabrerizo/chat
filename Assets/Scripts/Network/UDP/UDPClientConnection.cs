@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using UnityEngine;
 
 
 class UDPClientConnection : Connection
@@ -21,12 +22,13 @@ class UDPClientConnection : Connection
     private int connectionId;
     private long idGenerator;
 
+    private float TIMER_PER_TICK = 100.0f / 1000.0f;
+    private float timer = 0;
 
     public UDPClientConnection(string address, int port,
         Action<Connection> onConnected, Action<Connection> onDisconnected)
         : base(onConnected, onDisconnected)
     {
-
         connectionId = 0;
         idGenerator = 0;
 
@@ -61,27 +63,41 @@ class UDPClientConnection : Connection
     private void ClienThread()
     {
         IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, 0);
-        while (true)
+        bool isRunning = true;
+        while (isRunning)
         {
-            byte[] bytes = udpClient.Receive(ref groupEP);
-            if (bytes.Length < sizeof(int)) return;
-            MemoryStream stream = new MemoryStream(bytes);
-            BinaryReader reader = new BinaryReader(stream);
-            long readStartPosition = reader.BaseStream.Position;
-            UDPHeader header = (UDPHeader)reader.ReadInt32();
-            switch (header)
+            try
             {
-                case UDPHeader.ConnectionAccepted:
-                    OnConnectionAccepted(reader, readStartPosition);
-                    break;
-                case UDPHeader.ServerSendMessage:
-                    OnServerSendMessage(reader, readStartPosition, bytes);
-                    break;
-                case UDPHeader.ServerRegisterMessage:
-                    OnServerRegisterMessage(reader, readStartPosition);
-                    break;
-                default:
-                    break;
+                byte[] bytes = udpClient.Receive(ref groupEP);
+                if (bytes.Length < sizeof(int)) return;
+                MemoryStream stream = new MemoryStream(bytes);
+                BinaryReader reader = new BinaryReader(stream);
+                long readStartPosition = reader.BaseStream.Position;
+                UDPHeader header = (UDPHeader)reader.ReadInt32();
+                switch (header)
+                {
+                    case UDPHeader.ConnectionAccepted:
+                        OnConnectionAccepted(reader, readStartPosition);
+                        break;
+                    case UDPHeader.ServerSendMessage:
+                        OnServerSendMessage(reader, readStartPosition, bytes);
+                        break;
+                    case UDPHeader.ServerRegisterMessage:
+                        OnServerRegisterMessage(reader, readStartPosition);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (SocketException)
+            {
+                Debug.Log("The server is offline");
+                isRunning = false;
+            }
+            catch (ObjectDisposedException e)
+            {
+                Debug.Log("Disposed: " + e);
+                isRunning = false;
             }
         }
     }
@@ -103,7 +119,6 @@ class UDPClientConnection : Connection
             dataRecive.Enqueue(message);
             lastMessageReciveId = id;
         }
-
         MemoryStream stream = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(stream);
         UDPHeader header = UDPHeader.ClientRegisterMessage;
@@ -118,7 +133,6 @@ class UDPClientConnection : Connection
         long id = reader.ReadInt64();
         toSendMessages.Remove(id);
     }
-
 
     private void TryToConnect()
     {
@@ -145,8 +159,15 @@ class UDPClientConnection : Connection
         }
     }
 
-    public override void Tick<EventType>()
+    public override void Tick<EventType>(float deltaTime)
     {
+        if (timer < TIMER_PER_TICK)
+        {
+            timer += deltaTime;
+            return;
+        }
+        timer -= TIMER_PER_TICK;
+
         if (!IsConnected)
         {
             TryToConnect();

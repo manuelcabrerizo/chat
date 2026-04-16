@@ -25,7 +25,7 @@ public abstract class Connection
     }
 
     public abstract bool IsConnected { get; }
-    public abstract void Tick<EventType>() where EventType : Event, new();
+    public abstract void Tick<EventType>(float deltaTime) where EventType : Event, new();
     public abstract void SendData(byte[] data);
     public abstract void Close();
 }

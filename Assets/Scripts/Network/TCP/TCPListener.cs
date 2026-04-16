@@ -40,4 +40,8 @@ public class TCPListener : Listener
     {
         tcpListener.Stop();
     }
+
+    public override void Tick()
+    {
+    }
 }

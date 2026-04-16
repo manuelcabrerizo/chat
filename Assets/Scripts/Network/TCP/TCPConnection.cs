@@ -94,7 +94,7 @@ class TCPConnection : Connection
         stream.Write(data, 0, data.Length);
     }
 
-    public override void Tick<EventType>()
+    public override void Tick<EventType>(float deltaTime)
     {
         lock (readHandler)
         {

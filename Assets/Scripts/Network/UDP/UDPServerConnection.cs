@@ -10,6 +10,9 @@ public class UDPServerConnection : Connection
     private IPEndPoint endPoint = null;
     private Queue<UDPMessage> toSendMessages;
 
+    private float TIMER_PER_TICK = 16.0f / 1000.0f;
+    private float timer = 0;
+
     public UDPServerConnection(UdpClient udpClient, IPEndPoint endPoint,
         Action<Connection> onConnected, Action<Connection> onDisconnected)
         : 
@@ -39,13 +42,19 @@ public class UDPServerConnection : Connection
         toSendMessages.Enqueue(udpMessage);
     }
 
-    public override void Tick<EventType>()
+    public override void Tick<EventType>(float deltaTime)
     {
+        if (timer < TIMER_PER_TICK)
+        {
+            timer += deltaTime;
+            return;
+        }
+        timer -= TIMER_PER_TICK;
+
         if (toSendMessages.Count <= 0)
         {
             return;
         }
-
         UDPMessage message = toSendMessages.Peek();
         MemoryStream stream = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(stream);
@@ -72,5 +81,10 @@ public class UDPServerConnection : Connection
     public void DequeueMessage()
     { 
         toSendMessages.Dequeue();
+    }
+
+    public void Disconnect()
+    {
+        onDisconnected?.Invoke(this);
     }
 }

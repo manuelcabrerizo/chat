@@ -16,9 +16,9 @@
         connection.Close();
     }
 
-    public void Tick()
+    public void Tick(float deltaTime)
     {
-        connection.Tick<ClientReciveDataEvent>();
+        connection.Tick<ClientReciveDataEvent>(deltaTime);
     }
 
     private void OnConnected(Connection connection)

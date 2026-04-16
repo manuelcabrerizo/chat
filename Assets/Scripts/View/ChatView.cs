@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Text;
 using TMPro;
@@ -15,7 +16,6 @@ public class ChatView : MonoBehaviour
 {
     [SerializeField] private GameObject messagePrefab;
     [SerializeField] private GameObject responsePrefab;
-
 
     [SerializeField] private GameObject content;
     [SerializeField] private TMP_InputField inputField;
